@@ -57,6 +57,7 @@ function setup_env(){
 	/etc/ssh/sshd_config
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' \
 	/etc/ssh/sshd_config
+    rc-service sshd restart
     apk add lvm2 cryptsetup e2fsprogs parted btrfs-progs
 }
 
