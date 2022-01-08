@@ -84,7 +84,8 @@ function setup_lvm_on_luks(){
 	      --iter-time 5000 \
 	      --use-random \
 	      luksFormat $luks_partition
-    cryptsetup luksOpen $luks_partition lvmcrypt
+    echo -e "${luks_passphrase}\n" \
+	 | cryptsetup luksOpen $luks_partition lvmcrypt
     pvcreate /dev/mapper/lvmcrypt
     vgcreate vg0 /dev/mapper/lvmcrypt
     lvcreate -L $swap_partition_size vg0 -n swap
