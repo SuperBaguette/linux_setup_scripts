@@ -44,7 +44,7 @@ function setup_env(){
     rc-update add urandom boot
     rc-update add acpid default
     rc-service acpid start
-    sed -i 's/localhost localhost.localdomain/${hostname} ${hostname}.${domain} localhost localhost.localdomain/g' \
+    sed -i "s/localhost localhost.localdomain/${hostname} ${hostname}.${domain} localhost localhost.localdomain/g" \
 	/etc/hosts
     echo -e "${ntp_client}\n" \
 	| setup-ntp
@@ -53,7 +53,7 @@ function setup_env(){
     apk-update
     echo -e "${ssh_server}\n" \
 	| setup-sshd
-    sed -i 's/#Port 22/Port ${ssh_port}/g' \
+    sed -i "s/#Port 22/Port ${ssh_port}/g" \
 	/etc/ssh/sshd_config
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' \
 	/etc/ssh/sshd_config
