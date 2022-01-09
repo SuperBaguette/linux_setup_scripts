@@ -17,7 +17,7 @@ ntp_client=
 apk_repo_index= # type 'f' to ask the setup-apkrepos script to to find the fastest repository for you
 ssh_server=     # options: openssh | dropbear (ToDo: check the script works with dropbear)
 ssh_port=
-hdd_alpine=$(fdisk -l | awk '$1=="Disk"{print $2}' | tr -d :)
+hdd_alpine=
 partition_table_type=msdos # Options: msdos | gpt, currently testing with msdos right now (GPT not implemented)
 boot_partition="${hdd_alpine}1"
 luks_partition="${hdd_alpine}2"
@@ -114,7 +114,7 @@ function setup_filesystems(){
     mount -t btrfs -o compress=zstd,subvol=@home /dev/vg0/root /mnt/home
     mount -t btrfs -o compress=zstd,subvol=@var_log /dev/vg0/root /mnt/var/log
     mount -t btrfs -o compress=zstd,subvol=@snapshots /dev/vg0/root /mnt/.snapshots
-    mount -t ext4 $boot_partition /mnt/boot
+    mount $boot_partition /mnt/boot
     swapon /dev/vg0/swap
 }
 
