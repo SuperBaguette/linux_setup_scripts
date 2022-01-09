@@ -49,7 +49,7 @@ function setup_env(){
     echo -e "${ntp_client}\n" \
 	| setup-ntp
     echo -e "${apk_repo_index}\n" \
-	| setup-apk-repos
+	| setup-apkrepos
     apk-update
     echo -e "${ssh_server}\n" \
 	| setup-sshd
