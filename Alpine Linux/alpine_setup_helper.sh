@@ -98,7 +98,7 @@ function setup_lvm_on_luks(){
 function setup_filesystems(){
     mkfs.ext4 $boot_partition
     mkswap /dev/vg0/swap
-    mkfs.btrfs /dev/vg0/root 
+    mkfs.btrfs /dev/vg0/root -L root
     mount -t btrfs /dev/vg0/root /mnt
     for subvol in @root @home @var_log @snapshots;
     do
