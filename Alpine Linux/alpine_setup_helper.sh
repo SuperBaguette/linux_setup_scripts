@@ -83,6 +83,9 @@ function setup_filesystems(){
 	btrfs subvolume create /mnt/${subvol}
     done
     umount /mnt
+}
+
+function mount_filesystems(){
     mount -t btrfs -o compress=zstd,subvol=@root /dev/vg0/root /mnt
     for subfolder in home var/log .snapshots;
     do
