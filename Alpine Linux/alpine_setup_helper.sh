@@ -102,4 +102,9 @@ function mount_filesystems(){
     swapon /dev/vg0/swap
 }
 
+function install_alpine(){
+    setup-disk -m sys /mnt
+}
+
+# Run selected command
 "$@"
