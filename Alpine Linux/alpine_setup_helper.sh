@@ -98,7 +98,7 @@ function mount_filesystems(){
     mount -t btrfs -o compress=zstd,subvol=@home /dev/vg0/root /mnt/home
     mount -t btrfs -o compress=zstd,subvol=@var_log /dev/vg0/root /mnt/var/log
     mount -t btrfs -o compress=zstd,subvol=@snapshots /dev/vg0/root /mnt/.snapshots
-    mount $boot_partition /mnt/boot
+    mount -t ext4 $boot_partition /mnt/boot
     swapon /dev/vg0/swap
 }
 
