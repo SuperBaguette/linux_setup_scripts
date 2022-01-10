@@ -1,29 +1,7 @@
 #!/bin/sh
 # Script to automate the setup of Alpine Linux (mostly used as a cheat sheet for the moment)
 
-# Variables
-language=
-keyboard_layout=
-hostname=
-domain=
-interface=
-ip_address=
-netmask=
-gateway=
-root_passwd=
-timezone=
-sub_timezone=
-ntp_client=
-apk_repo_index= # type 'f' to ask the setup-apkrepos script to to find the fastest repository for you
-ssh_server=     # options: openssh | dropbear (ToDo: check the script works with dropbear)
-ssh_port=
-hdd_alpine=
-partition_table_type=msdos # Options: msdos | gpt, currently testing with msdos right now (GPT not implemented)
-boot_partition="${hdd_alpine}1"
-luks_partition="${hdd_alpine}2"
-boot_partition_size=
-luks_passphrase=""
-swap_partition_size=
+source alpine_setup_helper.conf
 
 # ----------------------------
 # Step #1 - Environment setup
