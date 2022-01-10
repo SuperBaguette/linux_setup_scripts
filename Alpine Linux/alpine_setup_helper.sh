@@ -85,6 +85,9 @@ function setup_filesystems(){
     umount /mnt
 }
 
+# ---------------------------
+# Step #5 - Mount filesystems
+# ---------------------------
 function mount_filesystems(){
     mount -t btrfs -o compress=zstd,subvol=@root /dev/vg0/root /mnt
     for subfolder in home var/log .snapshots;
