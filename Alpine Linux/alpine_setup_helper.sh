@@ -3,6 +3,19 @@
 
 source alpine_setup_helper.conf
 
+# Internal utilities
+function __get_uuid(){
+    blkid $1 | sed -n -e 's/^.* UUID=\"//p' | awk -F\" '{ print $1 }'
+}
+
+function __get_subvolname(){
+    btrfs subvolume show $1 | grep "Name:" | awk '{ print $2 }'
+}
+
+function __get_subvolid(){
+    btrfs subvolume show $1 | grep "Subvolume ID" | awk '{ print $3 }'
+}
+
 # ----------------------------
 # Step #1 - Environment setup
 # ----------------------------
