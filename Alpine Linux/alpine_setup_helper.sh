@@ -120,22 +120,22 @@ function install_alpine(){
 }
 
 function store_uuids(){
-    mkdir /tmp/uuids
+    [ ! -d "/tmp/uuids" ] && mkdir /tmp/uuids
     echo $(__get_uuid ${boot_partition}) > /tmp/uuids/boot
     echo $(__get_uuid ${luks_partition}) > /tmp/uuids/luks
-    echo $(__get_uuid /dev/vg0/root) > /tmp/uuids/root
-    echo $(__get_uuid /dev/vg0/swap) > /tmp/uuids/swap
+    echo $(__get_uuid /dev/vg0/root)     > /tmp/uuids/root
+    echo $(__get_uuid /dev/vg0/swap)     > /tmp/uuids/swap
 }
 
 function prepare_fstab(){
     store_uuids
     fstab=/mnt/etc/fstab
-    echo UUID=\"$(cat /tmp/uuids/root)\"    /            btrfs    ${btrfs_opts},subvolid=$(__get_subvolid(/dev/vg0/root)),subvol=$(__get_subvolname(/mnt))            0 1 >  ${fstab}
-    echo UUID=\"$(cat /tmp/uuids/root)\"    /home        btrfs    ${btrfs_opts},subvolid=$(__get_subvolid(/dev/vg0/root)),subvol=$(__get_subvolname(/mnt/home))       0 2 >> ${fstab}
-    echo UUID=\"$(cat /tmp/uuids/root)\"    /var/log     btrfs    ${btrfs_opts},subvolid=$(__get_subvolid(/dev/vg0/root)),subvol=$(__get_subvolname(/mnt/var/log))    0 2 >> ${fstab}
-    echo UUID=\"$(cat /tmp/uuids/root)\"    /.snapshots  btrfs    ${btrfs_opts},subvolid=$(__get_subvolid(/dev/vg0/root)),subvol=$(__get_subvolname(/mnt/home))       0 2 >> ${fstab}
-    echo UUID=\"$(cat /tmp/uuids/boot)\"    /boot        ext4     ${ext4_opts}                                                                                        0 2 >> ${fstab}
-    echo UUID=\"$(cat /tmp/uuids/swap)\"    swap         swap     defaults                                                                                            0 0 >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/root)\"    /            btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt),subvol=$(__get_subvolname /mnt)                              0 1" >  ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/root)\"    /home        btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/home),subvol=$(__get_subvolname /mnt/home)                    0 2" >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/root)\"    /var/log     btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/var/log),subvol=$(__get_subvolname /mnt/var/log)              0 2" >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/root)\"    /.snapshots  btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/.snapshots),subvol=$(__get_subvolname /mnt/.snapshots)        0 2" >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/boot)\"    /boot        ext4     ${ext4_opts}                                                                                               0 2" >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/swap)\"    swap         swap     defaults                                                                                                   0 0" >> ${fstab}
 }
 # Run selected command
 "$@"
