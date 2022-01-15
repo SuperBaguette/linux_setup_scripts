@@ -141,7 +141,7 @@ function prepare_fstab(){
 }
 
 function build_initramfs(){
-    echo "features=${mkinitfs_features}" > /mnt/etc/mkinitfs/mkinitfs.conf
+    echo "features=\"${mkinitfs_features}\"" > /mnt/etc/mkinitfs/mkinitfs.conf
     mkinitfs -c /mnt/etc/mkinitfs/mkinitfs.conf -b /mnt/ $(ls /mnt/lib/modules/)
 }
 
