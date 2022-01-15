@@ -145,5 +145,12 @@ function build_initramfs(){
     mkinitfs -c /mnt/etc/mkinitfs/mkinitfs.conf -b /mnt/ $(ls /mnt/lib/modules/)
 }
 
+function setup_keyfile(){
+    touch /mnt/crypto_keyfile.bin
+    chmod 600 /mnt/crypto_keyfile.bin
+    dd bs=512 count=4 if=/dev/urandom of=/mnt/crypto_keyfile.bin
+    echo -e ${luks_passphrase} | cryptsetup luksAddKey ${luks_partition} /mnt/crypto_keyfile.bin
+}
+
 # Run selected command
 "$@"
