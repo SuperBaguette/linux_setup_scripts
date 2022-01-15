@@ -152,5 +152,12 @@ function setup_keyfile(){
     echo -e ${luks_passphrase} | cryptsetup luksAddKey ${luks_partition} /mnt/crypto_keyfile.bin
 }
 
+function prepare_chroot(){
+    mount -t proc /proc /mnt/proc
+    mount --rbind /dev /mnt/dev
+    mount --make-rslave /mnt/dev
+    mount --rbind /sys /mnt/sys
+}
+
 # Run selected command
 "$@"
