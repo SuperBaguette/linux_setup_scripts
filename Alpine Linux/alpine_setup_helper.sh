@@ -140,5 +140,10 @@ function prepare_fstab(){
     echo "UUID=\"$(cat /tmp/uuids/swap)\"    swap                 swap     defaults                                                                                                   0 0" >> ${fstab}
 }
 
+function build_initramfs(){
+    echo "features=${mkinitfs_features}" > /mnt/etc/mkinitfs/mkinitfs.conf
+    mkinitfs -c /mnt/etc/mkinitfs/mkinitfs.conf -b /mnt/ $(ls /mnt/lib/modules/)
+}
+
 # Run selected command
 "$@"
