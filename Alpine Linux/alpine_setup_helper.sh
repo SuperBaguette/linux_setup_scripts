@@ -91,7 +91,7 @@ function setup_filesystems(){
     mkswap /dev/vg0/swap
     mkfs.btrfs /dev/vg0/root -L root
     mount -t btrfs /dev/vg0/root /mnt
-    for subvol in @root @home @var_log @snapshots;
+    for subvol in @root @home @var_log @snapshots @home_snapshots;
     do
 	btrfs subvolume create /mnt/${subvol}
     done
@@ -103,7 +103,7 @@ function setup_filesystems(){
 # ---------------------------
 function mount_filesystems(){
     mount -t btrfs -o compress=zstd,subvol=@root /dev/vg0/root /mnt
-    for subfolder in home var/log .snapshots;
+    for subfolder in home var/log .snapshots home/.snapshots;
     do
 	mkdir -p /mnt/${subfolder}
     done
@@ -111,6 +111,7 @@ function mount_filesystems(){
     mount -t btrfs -o compress=zstd,subvol=@home /dev/vg0/root /mnt/home
     mount -t btrfs -o compress=zstd,subvol=@var_log /dev/vg0/root /mnt/var/log
     mount -t btrfs -o compress=zstd,subvol=@snapshots /dev/vg0/root /mnt/.snapshots
+    mount -t btrfs -o compress=zstd,subvol=@home_snapshots /dev/vg0/root /mnt/home/.snapshots
     mount -t ext4 $boot_partition /mnt/boot
     swapon /dev/vg0/swap
 }
@@ -130,12 +131,14 @@ function store_uuids(){
 function prepare_fstab(){
     store_uuids
     fstab=/mnt/etc/fstab
-    echo "UUID=\"$(cat /tmp/uuids/root)\"    /            btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt),subvol=$(__get_subvolname /mnt)                              0 1" >  ${fstab}
-    echo "UUID=\"$(cat /tmp/uuids/root)\"    /home        btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/home),subvol=$(__get_subvolname /mnt/home)                    0 2" >> ${fstab}
-    echo "UUID=\"$(cat /tmp/uuids/root)\"    /var/log     btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/var/log),subvol=$(__get_subvolname /mnt/var/log)              0 2" >> ${fstab}
-    echo "UUID=\"$(cat /tmp/uuids/root)\"    /.snapshots  btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/.snapshots),subvol=$(__get_subvolname /mnt/.snapshots)        0 2" >> ${fstab}
-    echo "UUID=\"$(cat /tmp/uuids/boot)\"    /boot        ext4     ${ext4_opts}                                                                                               0 2" >> ${fstab}
-    echo "UUID=\"$(cat /tmp/uuids/swap)\"    swap         swap     defaults                                                                                                   0 0" >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/root)\"    /                    btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt),subvol=$(__get_subvolname /mnt)                              0 1" >  ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/root)\"    /home                btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/home),subvol=$(__get_subvolname /mnt/home)                    0 2" >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/root)\"    /var/log             btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/var/log),subvol=$(__get_subvolname /mnt/var/log)              0 2" >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/root)\"    /home/.snapshots     btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/home),subvol=$(__get_subvolname /mnt/home/.snapshots)         0 2" >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/root)\"    /.snapshots          btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/.snapshots),subvol=$(__get_subvolname /mnt/.snapshots)        0 2" >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/boot)\"    /boot                ext4     ${ext4_opts}                                                                                               0 2" >> ${fstab}
+    echo "UUID=\"$(cat /tmp/uuids/swap)\"    swap                 swap     defaults                                                                                                   0 0" >> ${fstab}
 }
+
 # Run selected command
 "$@"
