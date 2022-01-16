@@ -159,5 +159,17 @@ function prepare_chroot(){
     mount --rbind /sys /mnt/sys
 }
 
+function setup_grub(){
+    alias chroot_cmd="chroot /mnt \"source /etc/profile\" && chroot /mnt"
+    chroot_cmd "apk add grub grub-bios && apk del syslinux"
+    luks_uuid=$(cat /tmp/uuids/luks)
+    grub_cmd_line="GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${luks_uuid} cryptdm=lvmcrypt cryptkey rootflags=subvol=@root\""
+    chroot_cmd "echo ${grub_cmd_line} >> /etc/default/grub"
+    chroot_cmd "echo \"GRUB_ENABLE_CRYPTODISK=y\" >> /etc/default/grub"
+    chroot_cmd "echo \"GRUB_PRELOAD_MODULES=\"${grub_modules}\" >> /etc/default/grub"
+    chroot_cmd "grub-install --target=i386-pc ${hdd_alpine}"
+    chroot_cmd "grub-mkconfig -o /boot/grub/grub.cfg"
+}
+
 # Run selected command
 "$@"
