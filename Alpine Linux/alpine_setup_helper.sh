@@ -160,15 +160,23 @@ function prepare_chroot(){
 }
 
 function setup_grub(){
-    alias chroot_cmd="chroot /mnt \"source /etc/profile\" && chroot /mnt"
-    chroot_cmd "apk add grub grub-bios && apk del syslinux"
-    luks_uuid=$(cat /tmp/uuids/luks)
-    grub_cmd_line="GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${luks_uuid} cryptdm=lvmcrypt cryptkey rootflags=subvol=@root\""
-    chroot_cmd "echo ${grub_cmd_line} >> /etc/default/grub"
-    chroot_cmd "echo \"GRUB_ENABLE_CRYPTODISK=y\" >> /etc/default/grub"
-    chroot_cmd "echo \"GRUB_PRELOAD_MODULES=\"${grub_modules}\" >> /etc/default/grub"
-    chroot_cmd "grub-install --target=i386-pc ${hdd_alpine}"
-    chroot_cmd "grub-mkconfig -o /boot/grub/grub.cfg"
+    mkdir -p /mnt/tmp/uuids
+    cp /tmp/uuids/luks /mnt/tmp/uuids
+    echo ${hdd_alpine} > /mnt/tmp/hdd_alpine
+    echo ${grub_modules} > /mnt/tmp/grub_modules
+    cat <<EOF | chroot /mnt
+source /etc/profile
+luks_uuid=$(cat /tmp/uuids/luks)
+hdd_alpine=$(cat /tmp/hdd_alpine)
+grub_modules=$(cat /tmp/grub_modules)
+apk add grub grub-bios && apk del syslinux
+grub_cmd_line="GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${luks_uuid} cryptdm=lvmcrypt cryptkey rootflags=subvol=@root\""
+echo ${grub_cmd_line} >> /etc/default/grub
+echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
+echo "GRUB_PRELOAD_MODULES=\"${grub_modules}\"" >> /etc/default/grub
+grub-install --target=i386-pc ${hdd_alpine}
+grub-mkconfig -o /boot/grub/grub.cfg
+EOF
 }
 
 function unmount_all(){
