@@ -103,16 +103,16 @@ function setup_filesystems(){
 # ---------------------------
 function mount_filesystems(){
     mount -t btrfs -o compress=zstd,subvol=@root /dev/vg0/root /mnt
-    for subfolder in home var/log .snapshots home/.snapshots;
+    for subfolder in boot home var/log .snapshots;
     do
-	mkdir -p /mnt/${subfolder}
+	[ ! -d /mnt/${subfolder} ] && mkdir -p /mnt/${subfolder}
     done
-    mkdir /mnt/boot
+    mount -t ext4 $boot_partition /mnt/boot
     mount -t btrfs -o compress=zstd,subvol=@home /dev/vg0/root /mnt/home
+    [ ! -d /mnt/home/.snapshots ] && mkdir -p /mnt/home/.snapshots
+    mount -t btrfs -o compress=zstd,subvol=@home_snapshots /dev/vg0/root /mnt/home/.snapshots
     mount -t btrfs -o compress=zstd,subvol=@var_log /dev/vg0/root /mnt/var/log
     mount -t btrfs -o compress=zstd,subvol=@snapshots /dev/vg0/root /mnt/.snapshots
-    mount -t btrfs -o compress=zstd,subvol=@home_snapshots /dev/vg0/root /mnt/home/.snapshots
-    mount -t ext4 $boot_partition /mnt/boot
     swapon /dev/vg0/swap
 }
 
