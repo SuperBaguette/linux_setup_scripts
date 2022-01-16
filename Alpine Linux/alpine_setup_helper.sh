@@ -171,5 +171,22 @@ function setup_grub(){
     chroot_cmd "grub-mkconfig -o /boot/grub/grub.cfg"
 }
 
+function unmount_all(){
+    swapoff /dev/vg0/swap
+    for mountpoint in dev proc sys;
+    do
+	umount -l /mnt/${mountpoint}
+    done
+
+    for mountpoint in boot var/log .snapshots home/.snapshots home;
+    do
+	umount /mnt/${mountpoint}
+    done
+
+    umount /mnt
+    vgchange -a n
+    cryptsetup luksClose lvmcrypt
+}
+
 # Run selected command
 "$@"
