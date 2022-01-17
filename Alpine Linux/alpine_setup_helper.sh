@@ -41,6 +41,7 @@ function setup_env(){
 	| setup-ntp
     echo -e "${apk_repo_index}\n" \
 	| setup-apkrepos
+    sed -i 's/^#community/community/g' /etc/apk/repositories
     apk update
     echo -e "${ssh_server}\n" \
 	| setup-sshd
