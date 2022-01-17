@@ -53,6 +53,9 @@ function setup_env(){
     apk add lvm2 cryptsetup e2fsprogs parted btrfs-progs haveged pv
 }
 
+function random_wipe_drive(){
+    # Warning: takes a very long time. Typical throughput is ~80 MiB/s on a hdd. Therefore, to wipe 1TiB this will take about 3.6 hours.
+    haveged -n 0 | pv -ptab | dd of=${hdd_alpine} bs=16M
 }
 
 # ----------------------------
