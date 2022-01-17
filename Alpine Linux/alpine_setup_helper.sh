@@ -41,7 +41,7 @@ function setup_env(){
 	| setup-ntp
     echo -e "${apk_repo_index}\n" \
 	| setup-apkrepos
-    apk-update
+    apk update
     echo -e "${ssh_server}\n" \
 	| setup-sshd
     sed -i "s/#Port 22/Port ${ssh_port}/g" \
