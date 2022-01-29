@@ -81,7 +81,7 @@ function setup_lvm_on_luks(){
 	      --iter-time 5000 \
 	      --use-random \
 	      luksFormat $LUKS_PARTITION
-    echo -e "${luks_passphrase}\n" \
+    echo -e "${LUKS_PASSPHRASE}\n" \
 	 | cryptsetup luksOpen $LUKS_PARTITION lvmcrypt
     pvcreate /dev/mapper/lvmcrypt
     vgcreate vg0 /dev/mapper/lvmcrypt
@@ -169,10 +169,10 @@ function setup_grub(){
     cat <<EOF | chroot /mnt
 source /etc/profile
 apk add grub grub-bios && apk del syslinux
-echo "GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${luks_uuid} cryptdm=lvmcrypt cryptkey rootflags=subvol=@root\"" >> /etc/default/grub
+echo "GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${LUKS_UUID} cryptdm=lvmcrypt cryptkey rootflags=subvol=@root\"" >> /etc/default/grub
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
-echo "GRUB_PRELOAD_MODULES=\"${grub_modules}\"" >> /etc/default/grub
-grub-install --target=i386-pc ${hdd_alpine}
+echo "GRUB_PRELOAD_MODULES=\"${GRUB_MODULES}\"" >> /etc/default/grub
+grub-install --target=i386-pc ${HDD_ALPINE}
 grub-mkconfig -o /boot/grub/grub.cfg
 EOF
 }
