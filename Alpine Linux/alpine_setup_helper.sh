@@ -186,12 +186,12 @@ function unmount_all(){
     swapoff /dev/${VG_NAME}/${SWAP_LV_NAME}
     for MOUNTPOINT in dev proc sys;
     do
-	umount -l /mnt/${MOUNTPOINT}
+	umount /mnt/${MOUNTPOINT} || umount -l /mnt/${MOUNTPOINT}
     done
 
     for mountpoint in boot var/log .snapshots home/.snapshots home;
     do
-	umount /mnt/${MOUNTPOINT}
+	umount /mnt/${MOUNTPOINT} || umount -l /mnt/${MOUNTPOINT}
     done
 
     umount /mnt
