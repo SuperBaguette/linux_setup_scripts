@@ -20,32 +20,32 @@ function __get_subvolid(){
 # Step #1 - Environment setup
 # ----------------------------
 function setup_env(){
-    echo -e "${language}\n${language}-${keyboard_layout}\n" \
+    echo -e "${LANGUAGE}\n${KEYBOARD_LAYOUT}\n" \
 	| setup-keymap 
-    echo -e "${hostname}.${domain}\n" \
+    echo -e "${HOSTNAME}.${DOMAIN}\n" \
 	| setup-hostname
-    echo -e "${interface}\n${ip_address}\n${netmask}\n${gateway}\nn\n" \
+    echo -e "${INTERFACE}\n${IP_ADDRESS}\n${NETMASK}\n${GATEWAY}\nn\n" \
 	| setup-interfaces
     rc-service networking start
-    echo -e "${root_passwd}\n${root_passwd}\n" \
+    echo -e "${ROOT_PASSWD}\n${ROOT_PASSWD}\n" \
 	| passwd
-    echo -e "${timezone}\n${sub_timezone}\n" \
+    echo -e "${TIMEZONE}\n${SUB_TIMEZONE}\n" \
 	| setup-timezone
     rc-update add networking boot
     rc-update add urandom boot
     rc-update add acpid default
     rc-service acpid start
-    sed -i "s/localhost localhost.localdomain/${hostname} ${hostname}.${domain} localhost localhost.localdomain/g" \
+    sed -i "s/localhost localhost.localdomain/${HOSTNAME} ${HOSTNAME}.${DOMAIN} localhost localhost.localdomain/g" \
 	/etc/hosts
-    echo -e "${ntp_client}\n" \
+    echo -e "${NTP_CLIENT}\n" \
 	| setup-ntp
-    echo -e "${apk_repo_index}\n" \
+    echo -e "${APK_REPO_INDEX}\n" \
 	| setup-apkrepos
     sed -i '/^.*community.*$/s/^#.*http/http/g' /etc/apk/repositories
     apk update
-    echo -e "${ssh_server}\n" \
+    echo -e "${SSH_SERVER}\n" \
 	| setup-sshd
-    sed -i "s/#Port 22/Port ${ssh_port}/g" \
+    sed -i "s/#Port 22/Port ${SSH_PORT}/g" \
 	/etc/ssh/sshd_config
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' \
 	/etc/ssh/sshd_config
@@ -55,24 +55,24 @@ function setup_env(){
 
 function random_wipe_drive(){
     # Warning: takes a very long time. Typical throughput is ~80 MiB/s on a hdd. Therefore, to wipe 1TiB this will take about 3.6 hours.
-    haveged -n 0 | pv -ptab | dd of=${hdd_alpine} bs=16M
+    haveged -n 0 | pv -ptab | dd of=${HDD_ALPINE} bs=16M
 }
 
 # ----------------------------
 # Step #2 - Partitionning
 # ----------------------------
 function setup_partitions(){
-    parted -s ${hdd_alpine} mklabel ${partition_table_type}
-    parted -a opt -s ${hdd_alpine} mkpart primary ext4 0% ${boot_partition_size} # Boot partition
-    parted -s ${hdd_alpine} set 1 boot on
-    parted -a opt -s ${hdd_alpine} mkpart primary ${boot_partition_size} '100%' # LUKS container
+    parted -s ${HDD_ALPINE} mklabel ${PARTITION_TABLE_TYPE}
+    parted -a opt -s ${HDD_ALPINE} mkpart primary ext4 0% ${BOOT_PARTITION_SIZE} # Boot partition
+    parted -s ${HDD_ALPINE} set 1 boot on
+    parted -a opt -s ${HDD_ALPINE} mkpart primary ${BOOT_PARTITION_SIZE} '100%' # LUKS container
 }
 
 # ----------------------------
 # Step #3 - LVM on LUKS
 # ----------------------------
 function setup_lvm_on_luks(){
-    echo -e "${luks_passphrase}\n" \
+    echo -e "${LUKS_PASSPHRASE}\n" \
 	| cryptsetup \
 	      -v \
 	      -c serpent-xts-plain64 \
@@ -80,12 +80,12 @@ function setup_lvm_on_luks(){
 	      --hash whirlpool \
 	      --iter-time 5000 \
 	      --use-random \
-	      luksFormat $luks_partition
+	      luksFormat $LUKS_PARTITION
     echo -e "${luks_passphrase}\n" \
-	 | cryptsetup luksOpen $luks_partition lvmcrypt
+	 | cryptsetup luksOpen $LUKS_PARTITION lvmcrypt
     pvcreate /dev/mapper/lvmcrypt
     vgcreate vg0 /dev/mapper/lvmcrypt
-    lvcreate -L $swap_partition_size vg0 -n swap
+    lvcreate -L $SWAP_PARTITION_SIZE vg0 -n swap
     lvcreate -l '100%FREE' vg0 -n root
 }
 
@@ -93,13 +93,13 @@ function setup_lvm_on_luks(){
 # Step #4 - Create filesystems
 # ----------------------------
 function setup_filesystems(){
-    mkfs.ext4 $boot_partition
+    mkfs.ext4 $BOOT_PARTITION
     mkswap /dev/vg0/swap
     mkfs.btrfs /dev/vg0/root -L root
     mount -t btrfs /dev/vg0/root /mnt
-    for subvol in @root @home @var_log @snapshots @home_snapshots;
+    for SUBVOL in @root @home @var_log @snapshots @home_snapshots;
     do
-	btrfs subvolume create /mnt/${subvol}
+	btrfs subvolume create /mnt/${SUBVOL}
     done
     umount /mnt
 }
@@ -109,11 +109,11 @@ function setup_filesystems(){
 # ---------------------------
 function mount_filesystems(){
     mount -t btrfs -o compress=zstd,subvol=@root /dev/vg0/root /mnt
-    for subfolder in boot home var/log .snapshots;
+    for SUBFOLDER in boot home var/log .snapshots;
     do
-	[ ! -d /mnt/${subfolder} ] && mkdir -p /mnt/${subfolder}
+	[ ! -d /mnt/${SUBFOLDER} ] && mkdir -p /mnt/${SUBFOLDER}
     done
-    mount -t ext4 $boot_partition /mnt/boot
+    mount -t ext4 $BOOT_PARTITION /mnt/boot
     mount -t btrfs -o compress=zstd,subvol=@home /dev/vg0/root /mnt/home
     [ ! -d /mnt/home/.snapshots ] && mkdir -p /mnt/home/.snapshots
     mount -t btrfs -o compress=zstd,subvol=@home_snapshots /dev/vg0/root /mnt/home/.snapshots
@@ -128,26 +128,26 @@ function install_alpine(){
 
 function store_uuids(){
     [ ! -d "/tmp/uuids" ] && mkdir /tmp/uuids
-    echo $(__get_uuid ${boot_partition}) > /tmp/uuids/boot
-    echo $(__get_uuid ${luks_partition}) > /tmp/uuids/luks
+    echo $(__get_uuid ${BOOT_PARTITION}) > /tmp/uuids/boot
+    echo $(__get_uuid ${LUKS_PARTITION}) > /tmp/uuids/luks
     echo $(__get_uuid /dev/vg0/root)     > /tmp/uuids/root
     echo $(__get_uuid /dev/vg0/swap)     > /tmp/uuids/swap
 }
 
 function prepare_fstab(){
     store_uuids
-    fstab=/mnt/etc/fstab
-    echo "UUID=$(cat /tmp/uuids/root)    /                    btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt),subvol=$(__get_subvolname /mnt)                                      0 1" >  ${fstab}
-    echo "UUID=$(cat /tmp/uuids/root)    /home                btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/home),subvol=$(__get_subvolname /mnt/home)                            0 2" >> ${fstab}
-    echo "UUID=$(cat /tmp/uuids/root)    /var/log             btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/var/log),subvol=$(__get_subvolname /mnt/var/log)                      0 2" >> ${fstab}
-    echo "UUID=$(cat /tmp/uuids/root)    /.snapshots          btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/.snapshots),subvol=$(__get_subvolname /mnt/.snapshots)                0 2" >> ${fstab}
-    echo "UUID=$(cat /tmp/uuids/root)    /home/.snapshots     btrfs    ${btrfs_opts},subvolid=$(__get_subvolid /mnt/home/.snapshots),subvol=$(__get_subvolname /mnt/home/.snapshots)      0 2" >> ${fstab}
-    echo "UUID=$(cat /tmp/uuids/boot)    /boot                ext4     ${ext4_opts}                                                                                                       0 2" >> ${fstab}
-    echo "UUID=$(cat /tmp/uuids/swap)    swap                 swap     defaults                                                                                                           0 0" >> ${fstab}
+    FSTAB=/mnt/etc/fstab
+    echo "UUID=$(cat /tmp/uuids/root)    /                    btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt),subvol=$(__get_subvolname /mnt)                                      0 1" >  ${FSTAB}
+    echo "UUID=$(cat /tmp/uuids/root)    /home                btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt/home),subvol=$(__get_subvolname /mnt/home)                            0 2" >> ${FSTAB}
+    echo "UUID=$(cat /tmp/uuids/root)    /var/log             btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt/var/log),subvol=$(__get_subvolname /mnt/var/log)                      0 2" >> ${FSTAB}
+    echo "UUID=$(cat /tmp/uuids/root)    /.snapshots          btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt/.snapshots),subvol=$(__get_subvolname /mnt/.snapshots)                0 2" >> ${FSTAB}
+    echo "UUID=$(cat /tmp/uuids/root)    /home/.snapshots     btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt/home/.snapshots),subvol=$(__get_subvolname /mnt/home/.snapshots)      0 2" >> ${FSTAB}
+    echo "UUID=$(cat /tmp/uuids/boot)    /boot                ext4     ${ext4_opts}                                                                                                       0 2" >> ${FSTAB}
+    echo "UUID=$(cat /tmp/uuids/swap)    swap                 swap     defaults                                                                                                           0 0" >> ${FSTAB}
 }
 
 function build_initramfs(){
-    echo "features=\"${mkinitfs_features}\"" > /mnt/etc/mkinitfs/mkinitfs.conf
+    echo "features=\"${MKINITFS_FEATURES}\"" > /mnt/etc/mkinitfs/mkinitfs.conf
     mkinitfs -c /mnt/etc/mkinitfs/mkinitfs.conf -b /mnt/ $(ls /mnt/lib/modules/)
 }
 
@@ -155,7 +155,7 @@ function setup_keyfile(){
     touch /mnt/crypto_keyfile.bin
     chmod 600 /mnt/crypto_keyfile.bin
     dd bs=512 count=4 if=/dev/urandom of=/mnt/crypto_keyfile.bin
-    echo -e ${luks_passphrase} | cryptsetup luksAddKey ${luks_partition} /mnt/crypto_keyfile.bin
+    echo -e ${LUKS_PASSPHRASE} | cryptsetup luksAddKey ${LUKS_PARTITION} /mnt/crypto_keyfile.bin
 }
 
 function prepare_chroot(){
@@ -179,14 +179,14 @@ EOF
 
 function unmount_all(){
     swapoff /dev/vg0/swap
-    for mountpoint in dev proc sys;
+    for MOUNTPOINT in dev proc sys;
     do
-	umount -l /mnt/${mountpoint}
+	umount -l /mnt/${MOUNTPOINT}
     done
 
     for mountpoint in boot var/log .snapshots home/.snapshots home;
     do
-	umount /mnt/${mountpoint}
+	umount /mnt/${MOUNTPOINT}
     done
 
     umount /mnt
