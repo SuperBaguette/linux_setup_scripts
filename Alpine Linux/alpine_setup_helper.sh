@@ -1,7 +1,7 @@
 #!/bin/sh
 # Script to automate the setup of Alpine Linux (mostly used as a cheat sheet for the moment)
 
-source alpine_setup_helper.conf
+source ./alpine_setup_helper.conf
 
 # Internal utilities
 function __get_uuid(){
