@@ -35,8 +35,8 @@ function setup_env(){
     rc-update add urandom boot
     rc-update add acpid default
     rc-service acpid start
-    echo "127.0.0.1    ${HOSTNAME}.${DOMAIN} localhost localhost.localdomain" > /etc/hosts
-    echo "::1          ${HOSTNAME}.${DOMAIN} localhost localhost.localdomain" >> /etc/hosts
+    echo "127.0.0.1 ${HOSTNAME} ${HOSTNAME}.${DOMAIN} localhost localhost.localdomain" > /etc/hosts
+    echo "::1       ${HOSTNAME} ${HOSTNAME}.${DOMAIN} localhost localhost.localdomain" >> /etc/hosts
     echo -e "${NTP_CLIENT}\n" \
 	| setup-ntp
     echo -e "${APK_REPO_INDEX}\n" \
