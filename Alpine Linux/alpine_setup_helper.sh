@@ -82,11 +82,11 @@ function setup_lvm_on_luks(){
 	      --use-random \
 	      luksFormat $LUKS_PARTITION
     echo -e "${LUKS_PASSPHRASE}\n" \
-	 | cryptsetup luksOpen $LUKS_PARTITION lvmcrypt
-    pvcreate /dev/mapper/lvmcrypt
-    vgcreate vg0 /dev/mapper/lvmcrypt
-    lvcreate -L $SWAP_PARTITION_SIZE vg0 -n swap
-    lvcreate -l '100%FREE' vg0 -n root
+	 | cryptsetup luksOpen $LUKS_PARTITION ${LUKS_DEVICE}
+    pvcreate /dev/mapper/${LUKS_DEVICE}
+    vgcreate ${VG_NAME} /dev/mapper/${LUKS_DEVICE}
+    lvcreate -L $SWAP_PARTITION_SIZE ${VG_NAME} -n $SWAP_LV_NAME
+    lvcreate -l '100%FREE' ${VG_NAME} -n $ROOT_LV_NAME
 }
 
 # ----------------------------
@@ -94,9 +94,9 @@ function setup_lvm_on_luks(){
 # ----------------------------
 function setup_filesystems(){
     mkfs.ext4 $BOOT_PARTITION
-    mkswap /dev/vg0/swap
-    mkfs.btrfs /dev/vg0/root -L root
-    mount -t btrfs /dev/vg0/root /mnt
+    mkswap /dev/${VG_NAME}/${SWAP_LV_NAME}
+    mkfs.btrfs /dev/${VG_NAME}/${ROOT_LV_NAME} -L root
+    mount -t btrfs /dev/${VG_NAME}/${ROOT_LV_NAME} /mnt
     for SUBVOL in @root @home @var_log @snapshots @home_snapshots;
     do
 	btrfs subvolume create /mnt/${SUBVOL}
@@ -108,18 +108,18 @@ function setup_filesystems(){
 # Step #5 - Mount filesystems
 # ---------------------------
 function mount_filesystems(){
-    mount -t btrfs -o compress=zstd,subvol=@root /dev/vg0/root /mnt
+    mount -t btrfs -o compress=zstd,subvol=@root /dev/${VG_NAME}/${ROOT_LV_NAME} /mnt
     for SUBFOLDER in boot home var/log .snapshots;
     do
 	[ ! -d /mnt/${SUBFOLDER} ] && mkdir -p /mnt/${SUBFOLDER}
     done
     mount -t ext4 $BOOT_PARTITION /mnt/boot
-    mount -t btrfs -o compress=zstd,subvol=@home /dev/vg0/root /mnt/home
+    mount -t btrfs -o compress=zstd,subvol=@home /dev/${VG_NAME}/${ROOT_LV_NAME} /mnt/home
     [ ! -d /mnt/home/.snapshots ] && mkdir -p /mnt/home/.snapshots
-    mount -t btrfs -o compress=zstd,subvol=@home_snapshots /dev/vg0/root /mnt/home/.snapshots
-    mount -t btrfs -o compress=zstd,subvol=@var_log /dev/vg0/root /mnt/var/log
-    mount -t btrfs -o compress=zstd,subvol=@snapshots /dev/vg0/root /mnt/.snapshots
-    swapon /dev/vg0/swap
+    mount -t btrfs -o compress=zstd,subvol=@home_snapshots /dev/${VG_NAME}/${ROOT_LV_NAME} /mnt/home/.snapshots
+    mount -t btrfs -o compress=zstd,subvol=@var_log /dev/${VG_NAME}/${ROOT_LV_NAME} /mnt/var/log
+    mount -t btrfs -o compress=zstd,subvol=@snapshots /dev/${VG_NAME}/${ROOT_LV_NAME} /mnt/.snapshots
+    swapon /dev/${VG_NAME}/${SWAP_LV_NAME}
 }
 
 function install_alpine(){
@@ -130,8 +130,8 @@ function store_uuids(){
     [ ! -d "/tmp/uuids" ] && mkdir /tmp/uuids
     echo $(__get_uuid ${BOOT_PARTITION}) > /tmp/uuids/boot
     echo $(__get_uuid ${LUKS_PARTITION}) > /tmp/uuids/luks
-    echo $(__get_uuid /dev/vg0/root)     > /tmp/uuids/root
-    echo $(__get_uuid /dev/vg0/swap)     > /tmp/uuids/swap
+    echo $(__get_uuid /dev/${VG_NAME}/${ROOT_LV_NAME})     > /tmp/uuids/root
+    echo $(__get_uuid /dev/${VG_NAME}/${SWAP_LV_NAME})     > /tmp/uuids/swap
 }
 
 function prepare_fstab(){
@@ -174,7 +174,7 @@ echo "GRUB_DISTRIBUTOR=\"Alpine\" > /etc/default/grub
 echo "GRUB_TIMEOUT=2" >> /etc/default/grub
 echo "GRUB_DISABLE_SUBMENU=y" >> /etc/default/grub
 echo "GRUB_DISABLE_RECOVERY=true" >> /etc/default/grub
-echo "GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${LUKS_UUID} cryptdm=lvmcrypt cryptkey rootflags=subvol=@root\"" >> /etc/default/grub
+echo "GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${LUKS_UUID} cryptdm=${LUKS_DEVICE} cryptkey rootflags=subvol=@root\"" >> /etc/default/grub
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
 echo "GRUB_PRELOAD_MODULES=\"${GRUB_MODULES}\"" >> /etc/default/grub
 grub-install --target=i386-pc ${HDD_ALPINE}
@@ -183,7 +183,7 @@ EOF
 }
 
 function unmount_all(){
-    swapoff /dev/vg0/swap
+    swapoff /dev/${VG_NAME}/${SWAP_LV_NAME}
     for MOUNTPOINT in dev proc sys;
     do
 	umount -l /mnt/${MOUNTPOINT}
@@ -196,7 +196,7 @@ function unmount_all(){
 
     umount /mnt
     vgchange -a n
-    cryptsetup luksClose lvmcrypt
+    cryptsetup luksClose ${LUKS_DEVICE}
 }
 
 # Run selected command
