@@ -166,9 +166,14 @@ function prepare_chroot(){
 }
 
 function setup_grub(){
+    LUKS_UUID=$(cat /tmp/uuids/luks)
     cat <<EOF | chroot /mnt
 source /etc/profile
 apk add grub grub-bios && apk del syslinux
+echo "GRUB_DISTRIBUTOR=\"Alpine\" > /etc/default/grub
+echo "GRUB_TIMEOUT=2" >> /etc/default/grub
+echo "GRUB_DISABLE_SUBMENU=y" >> /etc/default/grub
+echo "GRUB_DISABLE_RECOVERY=true" >> /etc/default/grub
 echo "GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${LUKS_UUID} cryptdm=lvmcrypt cryptkey rootflags=subvol=@root\"" >> /etc/default/grub
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
 echo "GRUB_PRELOAD_MODULES=\"${GRUB_MODULES}\"" >> /etc/default/grub
