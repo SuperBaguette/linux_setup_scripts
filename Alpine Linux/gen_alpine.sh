@@ -277,19 +277,36 @@ EOF
 
 function unmount_all(){
     swapoff /dev/${VG_NAME}/${SWAP_LV_NAME}
+
+		# Unmount /mnt/{dev,proc,sys}
     for MOUNTPOINT in dev proc sys;
     do
 		    umount -l /mnt/${MOUNTPOINT}
     done
 
+		# Unmount /mnt/{boot,var/log,.snapshots,home/.snapshots,home}
     for MOUNTPOINT in boot var/log .snapshots home/.snapshots home;
     do
 		    umount /mnt/${MOUNTPOINT} > /dev/null 2>&1
-				[ $? -eq 1 ] && sleep 5 && umount -l /mnt/${MOUNTPOINT}
+				if [ $? -eq 1 ]
+				then
+						sleep 5
+						umount -l /mnt/${MOUNTPOINT}
+				fi
     done
+
+		# Unmount /mnt
     umount /mnt > /dev/null 2>&1
-		[ $? -eq 1 ] && sleep 5 && umount -l /mnt
+		if [ $? -eq 1 ]
+		then
+				sleep 5
+				umount -l /mnt
+		fi
+
+		# Close volume group
     vgchange -a n
+
+		# Close LUKS device
     cryptsetup luksClose ${LUKS_DEVICE}
 }
 
