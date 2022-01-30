@@ -282,7 +282,7 @@ function unmount_all(){
 		    umount -l /mnt/${MOUNTPOINT}
     done
 
-    for mountpoint in boot var/log .snapshots home/.snapshots home;
+    for MOUNTPOINT in boot var/log .snapshots home/.snapshots home;
     do
 		    umount /mnt/${MOUNTPOINT} > /dev/null 2>&1
 				[ $? -eq 1 ] && sleep 5 && umount -l /mnt/${MOUNTPOINT}
