@@ -28,13 +28,18 @@ function __get_subvolid(){
     btrfs subvolume show $1 | grep "Subvolume ID" | awk '{ print $3 }'
 }
 
+# Alpine setup functions
 function help(){
     cat <<EOF
 This script provides various utilities to install Alpine Linux on a computer.
 Implemented utilities are :
 
-* setup_env 
-  ---------
+* -a | --all
+  ----------
+Run all the installation steps described below.
+
+* setup_env: -e | --environment 
+  -----------------------------
 Setup the Alpine environment on the live cd. 
   * sets the language and the keyboard layout
   * defines the hostname, the domain and update the hosts file accordingly
@@ -45,8 +50,8 @@ Setup the Alpine environment on the live cd.
   * sets up an SSH server and temporarily enables root login
   * installs several programs to prepare encryption, logical volumes, partitions, etc.
 
-* random_wipe_drive 
-  -----------------
+* random_wipe_drive: -w | --wipe
+  ------------------------------
 Fill the device HDD_ALPINE defined in the configuration file 
 with random data using hageged. 
 /!\ Warning /!\ 
@@ -54,65 +59,60 @@ This can take several hours depending on the size of the drive.
 The function will use pv to give feedback to the user regarding the 
 current status of the process.
 
-* setup_partitions 
-  -----------------
+* setup_partitions: -p | --partitions
+  -----------------------------------
 On HDD_ALPINE, sets up a partition table, create a boot partition and 
 another one for a LUKS container
 
-* setup_lvm_on_luks 
-  ------------------
+* setup_lvm_on_luks: -l | --luks 
+  ------------------------------
 Create a LUKS container on HDD_ALPINE with the provided passphrase. 
 Then, creates a physical volume, a volume group and logical volumes 
 for the swap and root filesystems. 
 
-* setup_filesystems 
-  -----------------
+* setup_filesystems: -f | --filesystems 
+  -------------------------------------
 On the previously generated logical volumes, create a swap 
 filesystem, a BTRFS filesystem on the root logical volume and several relevant 
 subvolumes useful to define a snapshotting strategy later.
 
-* mount_filesystems 
-  -----------------
+* mount_filesystems: -m | --mount
+  -------------------------------
 After the creation of the filesystems using setup_filesystems, mount everything 
 using /mnt as a target root directory for the final Alpine Linux system.
 
-* install_alpine 
-  --------------
+* install_alpine: -i | --install 
+  ------------------------------
 Installs a base Alpine Linux distribution on the previously generated and 
 mounted filesystems. 
 
-* store_uuids 
-  -----------
-Gets the uuids of different devices and stores them as temporary files in 
-/tmp/uuids
-
-* prepare_fstab 
-  -------------
+* prepare_fstab: -t | --fstab
+  ---------------------------
 Based on the mounted filesystems, writes the fstab file of the target Alpine 
 Linux system.
 
-* build_initramfs 
-  ---------------
+* build_initramfs: -n | --initramfs
+  ---------------------------------
 Using the settings of the configuration file, prepares an initramfs for the 
 target system using mkinitfs
 
-* setup_keyfile 
-  -------------
+* setup_keyfile: -k | --keyfile
+  -----------------------------
 In order to have to type the passphrase twice (once in grub, and another time 
 at the initramfs stage), prepares a random binary file and adds it as a 
 secondary key to unlock the LUKS container.
 
-* prepare_chroot 
-  --------------
+* prepare_chroot: -c | --chroot
+  -----------------------------
 Mount the /proc, /dev, /sys filesystems in the target system folder structure.
 
-* setup_grub 
-  ----------
+* setup_grub: -g | --grub 
+  -----------------------
 Install grub in the target system, and sets up the /etc/default/grub 
 configuration file.
 
-* unmount_all 
-  -----------
+* unmount_all: -u | --unmount
+  ---------------------------
 Cleanly unmount all of the target system folders, close all LVMs, close the LUKS
 container, turn off swap.
 EOF
