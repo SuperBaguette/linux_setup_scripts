@@ -64,8 +64,8 @@ current status of the process.
 On HDD_ALPINE, sets up a partition table, create a boot partition and 
 another one for a LUKS container
 
-* setup_lvm_on_luks: -l | --luks 
-  ------------------------------
+* setup_lvm_on_luks: -l | --lvm_on_luks
+  -------------------------------------
 Create a LUKS container on HDD_ALPINE with the provided passphrase. 
 Then, creates a physical volume, a volume group and logical volumes 
 for the swap and root filesystems. 
