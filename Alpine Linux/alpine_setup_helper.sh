@@ -1,5 +1,5 @@
 #!/bin/sh
-# Script to automate the setup of Alpine Linux (mostly used as a cheat sheet for the moment)
+# Script to automate the setup process of Alpine Linux in an LVM on LUKS approach.
 
 source ./alpine_setup_helper.conf
 
