@@ -1,7 +1,7 @@
 #!/bin/sh
 # Script to automate the setup process of Alpine Linux in an LVM on LUKS approach.
 
-source ./alpine_setup_helper.conf
+source ./gen_alpine.conf
 
 # Internal utilities
 function __get_uuid(){
