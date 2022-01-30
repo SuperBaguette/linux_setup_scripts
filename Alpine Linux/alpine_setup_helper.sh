@@ -8,6 +8,17 @@ function __get_uuid(){
     blkid $1 | sed -n -e 's/^.* UUID=\"//p' | awk -F\" '{ print $1 }'
 }
 
+function __store_uuids(){
+    [ ! -d "/tmp/uuids" ] && mkdir /tmp/uuids
+    [ ! -f "/tmp/uuids/boot"] && \
+				echo $(__get_uuid ${BOOT_PARTITION}) > /tmp/uuids/boot
+    [ ! -f "/tmp/uuids/luks"] && \
+				echo $(__get_uuid ${LUKS_PARTITION}) > /tmp/uuids/luks
+    [ ! -f "/tmp/uuids/root"] && \
+				echo $(__get_uuid /dev/${VG_NAME}/${ROOT_LV_NAME}) > /tmp/uuids/root
+    [ ! -f "/tmp/uuids/swap"] && \
+				echo $(__get_uuid /dev/${VG_NAME}/${SWAP_LV_NAME}) > /tmp/uuids/swap
+}
 
 function __get_subvolname(){
     btrfs subvolume show $1 | grep "Name:" | awk '{ print $2 }'
@@ -216,16 +227,8 @@ function install_alpine(){
     setup-disk -m sys /mnt
 }
 
-function store_uuids(){
-    [ ! -d "/tmp/uuids" ] && mkdir /tmp/uuids
-    echo $(__get_uuid ${BOOT_PARTITION}) > /tmp/uuids/boot
-    echo $(__get_uuid ${LUKS_PARTITION}) > /tmp/uuids/luks
-    echo $(__get_uuid /dev/${VG_NAME}/${ROOT_LV_NAME})     > /tmp/uuids/root
-    echo $(__get_uuid /dev/${VG_NAME}/${SWAP_LV_NAME})     > /tmp/uuids/swap
-}
-
 function prepare_fstab(){
-    store_uuids
+    __store_uuids
     FSTAB=/mnt/etc/fstab
     echo "UUID=$(cat /tmp/uuids/root)    /                    btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt),subvol=$(__get_subvolname /mnt)                                      0 1" >  ${FSTAB}
     echo "UUID=$(cat /tmp/uuids/root)    /home                btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt/home),subvol=$(__get_subvolname /mnt/home)                            0 2" >> ${FSTAB}
