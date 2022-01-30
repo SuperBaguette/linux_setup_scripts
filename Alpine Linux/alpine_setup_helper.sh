@@ -8,6 +8,7 @@ function __get_uuid(){
     blkid $1 | sed -n -e 's/^.* UUID=\"//p' | awk -F\" '{ print $1 }'
 }
 
+
 function __get_subvolname(){
     btrfs subvolume show $1 | grep "Name:" | awk '{ print $2 }'
 }
@@ -21,7 +22,9 @@ function help(){
 This script provides various utilities to install Alpine Linux on a computer.
 Implemented utilities are :
 
-- setup_env: setup the Alpine environment on the live cd. 
+* setup_env 
+  ---------
+Setup the Alpine environment on the live cd. 
   * sets the language and the keyboard layout
   * defines the hostname, the domain and update the hosts file accordingly
   * sets up the network interface
@@ -31,32 +34,76 @@ Implemented utilities are :
   * sets up an SSH server and temporarily enables root login
   * installs several programs to prepare encryption, logical volumes, partitions, etc.
 
-- random_wipe_drive: fill the device HDD_ALPINE defined in the configuration file with random data using hageged. 
-/!\ Warning /!\ This can take several hours depending on the size of the drive. The function will use pv to give feedback to the user regarding the current status of the process.
+* random_wipe_drive 
+  -----------------
+Fill the device HDD_ALPINE defined in the configuration file 
+with random data using hageged. 
+/!\ Warning /!\ 
+This can take several hours depending on the size of the drive. 
+The function will use pv to give feedback to the user regarding the 
+current status of the process.
 
-- setup_partitions: on HDD_ALPINE, sets up a partition table, create a boot partition and another one for a LUKS container
+* setup_partitions 
+  -----------------
+On HDD_ALPINE, sets up a partition table, create a boot partition and 
+another one for a LUKS container
 
-- setup_lvm_on_luks: create a LUKS container on HDD_ALPINE with the provided passphrase. Then, creates a physical volume, a volume group and logical volumes for the swap and root filesystems. 
+* setup_lvm_on_luks 
+  ------------------
+Create a LUKS container on HDD_ALPINE with the provided passphrase. 
+Then, creates a physical volume, a volume group and logical volumes 
+for the swap and root filesystems. 
 
-- setup_filesystems: on the previously generated logical volumes, create a swap filesystem, a BTRFS filesystem on the root logical volume and several relevant subvolumes useful to define a snapshotting strategy later.
+* setup_filesystems 
+  -----------------
+On the previously generated logical volumes, create a swap 
+filesystem, a BTRFS filesystem on the root logical volume and several relevant 
+subvolumes useful to define a snapshotting strategy later.
 
-- mount_filesystems: after the creation of the filesystems using setup_filesystems, mount everything using /mnt as a target root directory for the final Alpine Linux system.
+* mount_filesystems 
+  -----------------
+After the creation of the filesystems using setup_filesystems, mount everything 
+using /mnt as a target root directory for the final Alpine Linux system.
 
-- install_alpine: installs a base Alpine Linux distribution on the previously generated and mounted filesystems. 
+* install_alpine 
+  --------------
+Installs a base Alpine Linux distribution on the previously generated and 
+mounted filesystems. 
 
-- store_uuids: gets the uuids of different devices and stores them as temporary files in /tmp/uuids
+* store_uuids 
+  -----------
+Gets the uuids of different devices and stores them as temporary files in 
+/tmp/uuids
 
-- prepare_fstab: based on the mounted filesystems, writes the fstab file of the target Alpine Linux system.
+* prepare_fstab 
+  -------------
+Based on the mounted filesystems, writes the fstab file of the target Alpine 
+Linux system.
 
-- build_initramfs: using the settings of the configuration file, prepares an initramfs for the target system using mkinitfs
+* build_initramfs 
+  ---------------
+Using the settings of the configuration file, prepares an initramfs for the 
+target system using mkinitfs
 
-- setup_keyfile: in order to have to type the passphrase twice (once in grub, and another time at the initramfs stage), prepares a random binary file and adds it as a secondary key to unlock the LUKS container.
+* setup_keyfile 
+  -------------
+In order to have to type the passphrase twice (once in grub, and another time 
+at the initramfs stage), prepares a random binary file and adds it as a 
+secondary key to unlock the LUKS container.
 
-- prepare_chroot: mount the /proc, /dev, /sys filesystems in the target system folder structure.
+* prepare_chroot 
+  --------------
+Mount the /proc, /dev, /sys filesystems in the target system folder structure.
 
-- setup_grub: install grub in the target system, and sets up the /etc/default/grub configuration file.
+* setup_grub 
+  ----------
+Install grub in the target system, and sets up the /etc/default/grub 
+configuration file.
 
-- unmount_all: cleanly unmount all of the target system folders, close all LVMs, close the LUKS container, turn off swap.
+* unmount_all 
+  -----------
+Cleanly unmount all of the target system folders, close all LVMs, close the LUKS
+container, turn off swap.
 EOF
 }
 # ----------------------------
