@@ -263,7 +263,7 @@ function setup_grub(){
     cat <<EOF | chroot /mnt
 source /etc/profile
 apk add grub grub-bios && apk del syslinux
-echo "GRUB_DISTRIBUTOR=\"Alpine\" > /etc/default/grub
+echo "GRUB_DISTRIBUTOR=\"Alpine\"" > /etc/default/grub
 echo "GRUB_TIMEOUT=2" >> /etc/default/grub
 echo "GRUB_DISABLE_SUBMENU=y" >> /etc/default/grub
 echo "GRUB_DISABLE_RECOVERY=true" >> /etc/default/grub
