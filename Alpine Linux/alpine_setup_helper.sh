@@ -292,5 +292,88 @@ function unmount_all(){
     cryptsetup luksClose ${LUKS_DEVICE}
 }
 
-# Run selected command
-"$@"
+
+# Main script
+while [[ $# -gt 0 ]]; do
+		case $1 in
+				-h|--help)
+						help
+						shift
+						;;
+				-a|--all)
+						setup_env
+						#random_wipe_drive
+						setup_partitions
+						setup_lvm_on_luks
+						setup_filesystems
+						mount_filesystems
+						install_alpine
+						prepare_fstab
+						build_initramfs
+						setup_keyfile
+						prepare_chroot
+						setup_grub
+						unmount_all
+						;;
+				-e|--environment)
+						setup_env
+						shift
+						;;
+				-w|--wipe)
+						random_wipe_drive
+						shift
+						;;
+				-p|--partitions)
+						setup_partitions
+						shift
+						;;
+				-l|--lvm_on_luks)
+						setup_lvm_on_luks
+						shift
+						;;
+				-f|--filesystems)
+						setup_filesystems
+						shift
+						;;
+				-m|--mount)
+						mount_filesystems
+						shift
+						;;
+				-i|--install)
+						install_alpine
+						shift
+						;;
+				-t|--fstab)
+						prepare_fstab
+						shift
+						;;
+				-n|--initramfs)
+						build_initramfs
+						shift
+						;;
+				-k|--keyfile)
+						setup_keyfile
+						shift
+						;;
+				-c|--chroot)
+						prepare_chroot
+						shift
+						;;
+				-g|--grub)
+						setup_grub
+						shift
+						;;
+				-u|--unmount)
+						unmount_all
+						shift
+						;;
+				-*|--*)
+						echo "Unknown option: $1"
+						exit 1
+						;;
+				*)
+						echo "Invalid argument: $1"
+						exit 1
+						;;
+    esac
+done
