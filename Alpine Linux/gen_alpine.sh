@@ -10,13 +10,13 @@ function __get_uuid(){
 
 function __store_uuids(){
     [ ! -d "/tmp/uuids" ] && mkdir /tmp/uuids
-    [ ! -f "/tmp/uuids/boot"] && \
+    [ ! -f "/tmp/uuids/boot" ] && \
 				echo $(__get_uuid ${BOOT_PARTITION}) > /tmp/uuids/boot
-    [ ! -f "/tmp/uuids/luks"] && \
+    [ ! -f "/tmp/uuids/luks" ] && \
 				echo $(__get_uuid ${LUKS_PARTITION}) > /tmp/uuids/luks
-    [ ! -f "/tmp/uuids/root"] && \
+    [ ! -f "/tmp/uuids/root" ] && \
 				echo $(__get_uuid /dev/${VG_NAME}/${ROOT_LV_NAME}) > /tmp/uuids/root
-    [ ! -f "/tmp/uuids/swap"] && \
+    [ ! -f "/tmp/uuids/swap" ] && \
 				echo $(__get_uuid /dev/${VG_NAME}/${SWAP_LV_NAME}) > /tmp/uuids/swap
 }
 
