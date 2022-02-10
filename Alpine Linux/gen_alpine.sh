@@ -344,6 +344,7 @@ while [ $# -gt 0 ]; do
 			prepare_chroot
 			setup_grub
 			unmount_all
+			shift
 			;;
 		-e|--environment)
 			setup_env
