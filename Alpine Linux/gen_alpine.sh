@@ -14,13 +14,13 @@ __get_uuid(){
 __store_uuids(){
     [ ! -d "/tmp/uuids" ] && mkdir /tmp/uuids
     [ ! -f "/tmp/uuids/boot" ] && \
-		"$(__get_uuid ${BOOT_PARTITION})" > /tmp/uuids/boot
+		__get_uuid ${BOOT_PARTITION} > /tmp/uuids/boot
     [ ! -f "/tmp/uuids/luks" ] && \
-		"$(__get_uuid ${LUKS_PARTITION})" > /tmp/uuids/luks
+		__get_uuid ${LUKS_PARTITION} > /tmp/uuids/luks
     [ ! -f "/tmp/uuids/root" ] && \
-		"$(__get_uuid /dev/${VG_NAME}/${ROOT_LV_NAME})" > /tmp/uuids/root
+		__get_uuid /dev/${VG_NAME}/${ROOT_LV_NAME} > /tmp/uuids/root
     [ ! -f "/tmp/uuids/swap" ] && \
-		"$(__get_uuid /dev/${VG_NAME}/${SWAP_LV_NAME})" > /tmp/uuids/swap
+		__get_uuid /dev/${VG_NAME}/${SWAP_LV_NAME} > /tmp/uuids/swap
 }
 
 __get_subvolname(){
