@@ -1,6 +1,6 @@
 #!/bin/sh
-# Script to automate the setup process of Alpine Linux in an LVM on LUKS approach.
-
+# Script to automate the setup process of Alpine Linux in an LVM on LUKS
+# approach.
 # Source configuration file
 . ./gen_alpine.conf
 
@@ -53,7 +53,8 @@ Setup the Alpine environment on the live cd.
   * sets the NTP client
   * sets up the repositories for apk and calls apk update
   * sets up an SSH server and temporarily enables root login
-  * installs several programs to prepare encryption, logical volumes, partitions, etc.
+  * installs several programs to prepare encryption, logical volumes,
+  	partitions, etc.
 
 * random_wipe_drive: -w | --wipe
   ------------------------------
@@ -131,7 +132,8 @@ setup_env(){
 		| setup-keymap
 	printf '%s.%s\n' "${HOSTNAME}" "${DOMAIN}" \
 		| setup-hostname
-	printf '%s\n%s\n%s\n%s\nn\n' "${INTERFACE}" "${IP_ADDRESS}" "${NETMASK}" "${GATEWAY}" \
+	printf '%s\n%s\n%s\n%s\nn\n' \
+		"${INTERFACE}" "${IP_ADDRESS}" "${NETMASK}" "${GATEWAY}" \
 		| setup-interfaces
     rc-service networking start
 	printf '%s\n%s\n' "${ROOT_PASSWD}" "${ROOT_PASSWD}" \
@@ -143,8 +145,10 @@ setup_env(){
     rc-update add acpid default
     rc-service acpid start
 	{
-		echo "127.0.0.1 ${HOSTNAME} ${HOSTNAME}.${DOMAIN} localhost localhost.localdomain";
-		echo "::1       ${HOSTNAME} ${HOSTNAME}.${DOMAIN} localhost localhost.localdomain"
+		echo "127.0.0.1 ${HOSTNAME} ${HOSTNAME}.${DOMAIN} \
+			localhost localhost.localdomain";
+		echo "::1       ${HOSTNAME} ${HOSTNAME}.${DOMAIN} \
+			localhost localhost.localdomain"
 	} > /etc/hosts
 	printf '%s\n' "${NTP_CLIENT}" \
 		| setup-ntp
@@ -163,7 +167,8 @@ setup_env(){
 }
 
 random_wipe_drive(){
-    # Warning: takes a very long time. Typical throughput is ~80 MiB/s on a hdd. Therefore, to wipe 1TiB this will take about 3.6 hours.
+    # Warning: takes a very long time. Typical throughput is ~80 MiB/s on a hdd.
+	# Therefore, to wipe 1TiB this will take about 3.6 hours.
     haveged -n 0 | pv -ptab | dd of="${HDD_ALPINE}" bs=16M
 }
 
@@ -172,9 +177,11 @@ random_wipe_drive(){
 # --------------
 setup_partitions(){
     parted -s "${HDD_ALPINE}" mklabel "${PARTITION_TABLE_TYPE}"
-    parted -a opt -s "${HDD_ALPINE}" mkpart primary ext4 0% "${BOOT_PARTITION_SIZE}" # Boot partition
+    parted -a opt -s "${HDD_ALPINE}" \
+		mkpart primary ext4 0% "${BOOT_PARTITION_SIZE}" # Boot partition
     parted -s "${HDD_ALPINE}" set 1 boot on
-    parted -a opt -s "${HDD_ALPINE}" mkpart primary "${BOOT_PARTITION_SIZE}" '100%' # LUKS container
+    parted -a opt -s "${HDD_ALPINE}" \
+		mkpart primary "${BOOT_PARTITION_SIZE}" '100%' # LUKS container
 }
 
 # ------------
@@ -217,17 +224,22 @@ setup_filesystems(){
 # Mount filesystems
 # ------------------
 mount_filesystems(){
-    mount -t btrfs -o compress=zstd,subvol=@root "/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt
+    mount -t btrfs -o compress=zstd,subvol=@root \
+		"/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt
     for SUBFOLDER in boot home var/log .snapshots;
     do
 		[ ! -d "/mnt/${SUBFOLDER}" ] && mkdir -p "/mnt/${SUBFOLDER}"
     done
     mount -t ext4 "${BOOT_PARTITION}" /mnt/boot
-    mount -t btrfs -o compress=zstd,subvol=@home "/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt/home
+    mount -t btrfs -o compress=zstd,subvol=@home \
+		"/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt/home
     [ ! -d /mnt/home/.snapshots ] && mkdir -p /mnt/home/.snapshots
-    mount -t btrfs -o compress=zstd,subvol=@home_snapshots "/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt/home/.snapshots
-    mount -t btrfs -o compress=zstd,subvol=@var_log "/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt/var/log
-    mount -t btrfs -o compress=zstd,subvol=@snapshots "/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt/.snapshots
+    mount -t btrfs -o compress=zstd,subvol=@home_snapshots \
+		"/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt/home/.snapshots
+    mount -t btrfs -o compress=zstd,subvol=@var_log \
+		"/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt/var/log
+    mount -t btrfs -o compress=zstd,subvol=@snapshots \
+		"/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt/.snapshots
     swapon "/dev/${VG_NAME}/${SWAP_LV_NAME}"
 }
 
@@ -239,19 +251,44 @@ prepare_fstab(){
     __store_uuids
     FSTAB=/mnt/etc/fstab
     {
-		echo "UUID=$(cat /tmp/uuids/root)    /                    btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt),subvol=$(__get_subvolname /mnt)                                      0 1";
-		echo "UUID=$(cat /tmp/uuids/root)    /home                btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt/home),subvol=$(__get_subvolname /mnt/home)                            0 2";
-		echo "UUID=$(cat /tmp/uuids/root)    /var/log             btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt/var/log),subvol=$(__get_subvolname /mnt/var/log)                      0 2";
-		echo "UUID=$(cat /tmp/uuids/root)    /.snapshots          btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt/.snapshots),subvol=$(__get_subvolname /mnt/.snapshots)                0 2";
-		echo "UUID=$(cat /tmp/uuids/root)    /home/.snapshots     btrfs    ${BTRFS_OPTS},subvolid=$(__get_subvolid /mnt/home/.snapshots),subvol=$(__get_subvolname /mnt/home/.snapshots)      0 2";
-		echo "UUID=$(cat /tmp/uuids/boot)    /boot                ext4     ${EXT4_OPTS}                                                                                                       0 2";
-		echo "UUID=$(cat /tmp/uuids/swap)    swap                 swap     defaults                                                                                                           0 0"
+		echo "UUID=$(cat /tmp/uuids/root)    /                    btrfs    \
+			${BTRFS_OPTS},\
+			subvolid=$(__get_subvolid /mnt),\
+			subvol=$(__get_subvolname /mnt)\
+            0 1";
+		echo "UUID=$(cat /tmp/uuids/root)    /home                btrfs    \
+			${BTRFS_OPTS},\
+			subvolid=$(__get_subvolid /mnt/home),\
+			subvol=$(__get_subvolname /mnt/home)\
+            0 2";
+		echo "UUID=$(cat /tmp/uuids/root)    /var/log             btrfs    \
+			${BTRFS_OPTS},\
+			subvolid=$(__get_subvolid /mnt/var/log),\
+			subvol=$(__get_subvolname /mnt/var/log)\
+            0 2";
+		echo "UUID=$(cat /tmp/uuids/root)    /.snapshots          btrfs    \
+			${BTRFS_OPTS},\
+			subvolid=$(__get_subvolid /mnt/.snapshots),\
+			subvol=$(__get_subvolname /mnt/.snapshots)\
+            0 2";
+		echo "UUID=$(cat /tmp/uuids/root)    /home/.snapshots     btrfs    \
+			${BTRFS_OPTS},\
+			subvolid=$(__get_subvolid /mnt/home/.snapshots),\
+			subvol=$(__get_subvolname /mnt/home/.snapshots)\
+			0 2";
+		echo "UUID=$(cat /tmp/uuids/boot)    /boot                ext4     \
+			${EXT4_OPTS}\
+            0 2";
+		echo "UUID=$(cat /tmp/uuids/swap)    swap                 swap     \
+			defaults\
+            0 0"
 	} > "${FSTAB}"
 }
 
 build_initramfs(){
     echo "features=\"${MKINITFS_FEATURES}\"" > /mnt/etc/mkinitfs/mkinitfs.conf
-    mkinitfs -c /mnt/etc/mkinitfs/mkinitfs.conf -b /mnt/ "$(ls /mnt/lib/modules/)"
+    mkinitfs -c /mnt/etc/mkinitfs/mkinitfs.conf \
+		-b /mnt/ "$(ls /mnt/lib/modules/)"
 }
 
 setup_keyfile(){
@@ -278,7 +315,9 @@ echo "GRUB_DISTRIBUTOR=\"Alpine\"" > /etc/default/grub
 echo "GRUB_TIMEOUT=2" >> /etc/default/grub
 echo "GRUB_DISABLE_SUBMENU=y" >> /etc/default/grub
 echo "GRUB_DISABLE_RECOVERY=true" >> /etc/default/grub
-echo "GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${LUKS_UUID} cryptdm=${LUKS_DEVICE} cryptkey rootflags=subvol=@root\"" >> /etc/default/grub
+echo "GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${LUKS_UUID} \
+	cryptdm=${LUKS_DEVICE} cryptkey rootflags=subvol=@root\"" \
+	>> /etc/default/grub
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
 echo "GRUB_PRELOAD_MODULES=\"${GRUB_MODULES}\"" >> /etc/default/grub
 grub-install --target=i386-pc ${HDD_ALPINE}
