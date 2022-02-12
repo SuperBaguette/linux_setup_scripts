@@ -8,9 +8,8 @@
 # Internal utilities
 # -------------------
 __get_uuid(){
-    blkid "$1" | sed -n -e 's/^.* UUID=\"//p' | awk -F\" '{ print $1 }'
+    blkid "$1" | awk -F\" '{ print $2 }'
 }
-
 __store_uuids(){
     [ ! -d "/tmp/uuids" ] && mkdir /tmp/uuids
     [ ! -f "/tmp/uuids/boot" ] && \
