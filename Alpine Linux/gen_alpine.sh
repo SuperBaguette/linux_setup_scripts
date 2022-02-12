@@ -1,6 +1,7 @@
 #!/bin/sh
 # Script to automate the setup process of Alpine Linux in an LVM on LUKS
 # approach.
+
 # Source configuration file
 . ./gen_alpine.conf
 
