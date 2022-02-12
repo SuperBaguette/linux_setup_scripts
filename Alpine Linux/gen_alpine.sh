@@ -27,7 +27,7 @@ __get_subvolname(){
 }
 
 __get_subvolid(){
-    btrfs subvolume show "$1" | grep "Subvolume ID" | awk '{ print $3 }'
+    btrfs subvolume show "$1" | awk '/Subvolume ID/{ print $3 }'
 }
 
 # ----------------------
