@@ -23,7 +23,7 @@ __store_uuids(){
 }
 
 __get_subvolname(){
-    btrfs subvolume show "$1" | grep "Name:" | awk '{ print $2 }'
+    btrfs subvolume show "$1" | awk '/Name/{ print $2 }'
 }
 
 __get_subvolid(){
