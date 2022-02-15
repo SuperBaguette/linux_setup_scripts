@@ -128,7 +128,7 @@ EOF
 # Environment setup
 # ------------------
 setup_env(){
-	echo "Prepare setup environment..."
+	echo "[BEGIN] Preparing environment..."
     printf '%s\n%s\n' "${LANGUAGE}" "${KEYBOARD_LAYOUT}" \
 		| setup-keymap > /dev/null
 	printf '%s.%s\n' "${HOSTNAME}" "${DOMAIN}" \
@@ -180,18 +180,26 @@ random_wipe_drive(){
 # Partitionning
 # --------------
 setup_partitions(){
-    parted -s "${HDD_ALPINE}" mklabel "${PARTITION_TABLE_TYPE}"
+	echo "[BEGIN] Create partition table..."
+    parted -s "${HDD_ALPINE}" \
+		mklabel "${PARTITION_TABLE_TYPE}"
+	echo "[DONE] Partition table created successfully."
+	echo "[BEGIN] Create boot partition..."
     parted -a opt -s "${HDD_ALPINE}" \
 		mkpart primary ext4 0% "${BOOT_PARTITION_SIZE}" # Boot partition
     parted -s "${HDD_ALPINE}" set 1 boot on
+	echo "[DONE] Boot partition created successfully."
+	echo "[BEGIN] Create partition for LUKS container..."
     parted -a opt -s "${HDD_ALPINE}" \
 		mkpart primary "${BOOT_PARTITION_SIZE}" '100%' # LUKS container
+	echo "[DONE] LUKS container partition created successfully."
 }
 
 # ------------
 # LVM on LUKS
 # ------------
 setup_lvm_on_luks(){
+	echo "[BEGIN] Initializing LUKS container..."
 	printf '%s\n' "${LUKS_PASSPHRASE}" \
 		| cryptsetup \
 	    -v \
@@ -200,34 +208,43 @@ setup_lvm_on_luks(){
 	    --hash whirlpool \
 	    --iter-time 5000 \
 	    --use-random \
-	    luksFormat "${LUKS_PARTITION}"
+	    luksFormat "${LUKS_PARTITION}" > /dev/null
+	echo "[DONE] LUKS container generated successfully"
+	echo "[BEGIN] Create physical volume, volume group & LVMs..."
 	printf '%s\n' "${LUKS_PASSPHRASE}" \
 		| cryptsetup luksOpen "${LUKS_PARTITION}" "${LUKS_DEVICE}"
-    pvcreate "/dev/mapper/${LUKS_DEVICE}"
-    vgcreate "${VG_NAME}" "/dev/mapper/${LUKS_DEVICE}"
-    lvcreate -L "${SWAP_PARTITION_SIZE}" "${VG_NAME}" -n "${SWAP_LV_NAME}"
-    lvcreate -l '100%FREE' "${VG_NAME}" -n "${ROOT_LV_NAME}"
+    pvcreate "/dev/mapper/${LUKS_DEVICE}" > /dev/null
+    vgcreate "${VG_NAME}" "/dev/mapper/${LUKS_DEVICE}" > /dev/null
+    lvcreate -L "${SWAP_PARTITION_SIZE}" "${VG_NAME}" \
+		-n "${SWAP_LV_NAME}" > /dev/null
+    lvcreate -l '100%FREE' "${VG_NAME}" -n "${ROOT_LV_NAME}" > /dev/null
+	echo "[DONE] LVMs created successfully."
 }
 
 # -------------------
 # Create filesystems
 # -------------------
 setup_filesystems(){
-    mkfs.ext4 "${BOOT_PARTITION}"
-    mkswap "/dev/${VG_NAME}/${SWAP_LV_NAME}"
-    mkfs.btrfs "/dev/${VG_NAME}/${ROOT_LV_NAME}" -L root
+	echo "[BEGIN] Setup filesystems & Swap..."
+    mkfs.ext4 "${BOOT_PARTITION}" > /dev/null
+    mkswap "/dev/${VG_NAME}/${SWAP_LV_NAME}" > /dev/null
+    mkfs.btrfs "/dev/${VG_NAME}/${ROOT_LV_NAME}" -L root > /dev/null
+	echo "[DONE] filesystems setup OK"
+	echo "[BEGIN] Create BTRFS subvolumes..."
     mount -t btrfs "/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt
     for SUBVOL in @root @home @var_log @snapshots @home_snapshots;
     do
 		btrfs subvolume create "/mnt/${SUBVOL}"
     done
     umount /mnt
+	echo "[DONE] BTRFS subvolumes created successfully"
 }
 
 # ------------------
 # Mount filesystems
 # ------------------
 mount_filesystems(){
+	echo "[BEGIN] mount previously created filesystems & initialize Swap..."
     mount -t btrfs -o compress=zstd,subvol=@root \
 		"/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt
     for SUBFOLDER in boot home var/log .snapshots;
@@ -245,13 +262,17 @@ mount_filesystems(){
     mount -t btrfs -o compress=zstd,subvol=@snapshots \
 		"/dev/${VG_NAME}/${ROOT_LV_NAME}" /mnt/.snapshots
     swapon "/dev/${VG_NAME}/${SWAP_LV_NAME}"
+	echo "[DONE] Filesystems mounted successfully."
 }
 
 install_alpine(){
+	echo "[BEGIN] installation of the base ALPINE Linux system..."
     setup-disk -m sys /mnt
+	echo "[DONE] ALPINE Linux installed successfully."
 }
 
 prepare_fstab(){
+	echo "[BEGIN] Generate FStab file using device UUIDs..."
     __store_uuids
     FSTAB=/mnt/etc/fstab
     {
@@ -287,34 +308,45 @@ prepare_fstab(){
 			defaults\
             0 0"
 	} > "${FSTAB}"
+	echo "[DONE] FStab file was successfully generated."
 }
 
 build_initramfs(){
+	echo "[BEGIN] build initramfs based on the specified feature set..."
     echo "features=\"${MKINITFS_FEATURES}\"" > /mnt/etc/mkinitfs/mkinitfs.conf
     mkinitfs -c /mnt/etc/mkinitfs/mkinitfs.conf \
-		-b /mnt/ "$(ls /mnt/lib/modules/)"
+		-b /mnt/ "$(ls /mnt/lib/modules/)" > /dev/null
+	echo "[DONE] initramfs was successfully built."
 }
 
 setup_keyfile(){
+	echo "[BEGIN] Create keyfile to unlock initramfs after boot..."
     touch /mnt/crypto_keyfile.bin
     chmod 600 /mnt/crypto_keyfile.bin
-    dd bs=512 count=4 if=/dev/urandom of=/mnt/crypto_keyfile.bin
+    dd bs=512 count=4 if=/dev/urandom of=/mnt/crypto_keyfile.bin > /dev/null
+	echo "[DONE] a new keyfile was successfully generated."
+	echo "[BEGIN] add the keyfile as a new key to the LUKS container..."
 	printf '%s\n' "${LUKS_PASSPHRASE}" \
-		| cryptsetup luksAddKey "${LUKS_PARTITION}" /mnt/crypto_keyfile.bin
+		| cryptsetup luksAddKey \
+		"${LUKS_PARTITION}" /mnt/crypto_keyfile.bin > /dev/null
+	echo "[DONE] the keyfile is now a valid key to the LUKS container."
 }
 
 prepare_chroot(){
+	echo "[BEGIN] preparing filesystems for chroot..."
     mount -t proc /proc /mnt/proc
     mount --rbind /dev /mnt/dev
     mount --make-rslave /mnt/dev
     mount --rbind /sys /mnt/sys
+	echo "[DONE] filesystems are ready for chroot"
 }
 
 setup_grub(){
+	echo "[BEGIN] setup GRUB2 for boot"
     LUKS_UUID=$(cat /tmp/uuids/luks)
     cat <<EOF | chroot /mnt
 source /etc/profile
-apk add grub grub-bios && apk del syslinux
+apk add grub grub-bios && apk del syslinux > /dev/null
 echo "GRUB_DISTRIBUTOR=\"Alpine\"" > /etc/default/grub
 echo "GRUB_TIMEOUT=2" >> /etc/default/grub
 echo "GRUB_DISABLE_SUBMENU=y" >> /etc/default/grub
@@ -324,12 +356,13 @@ echo "GRUB_CMDLINE_LINUX_DEFAULT=\"cryptroot=UUID=${LUKS_UUID} \
 	>> /etc/default/grub
 echo "GRUB_ENABLE_CRYPTODISK=y" >> /etc/default/grub
 echo "GRUB_PRELOAD_MODULES=\"${GRUB_MODULES}\"" >> /etc/default/grub
-grub-install --target=i386-pc ${HDD_ALPINE}
-grub-mkconfig -o /boot/grub/grub.cfg
+grub-install --target=i386-pc ${HDD_ALPINE} > /dev/null
+grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
 EOF
 }
 
 unmount_all(){
+	echo "[BEGIN] unmount all target filesystems and deactivate Swap..."
     swapoff "/dev/${VG_NAME}/${SWAP_LV_NAME}"
 
 	# Unmount /mnt/{dev,proc,sys}
@@ -358,10 +391,11 @@ unmount_all(){
 	fi
 
 	# Close volume group
-    vgchange -a n
+    vgchange -a n > /dev/null
 
 	# Close LUKS device
-    cryptsetup luksClose "${LUKS_DEVICE}"
+    cryptsetup luksClose "${LUKS_DEVICE}" > /dev/null
+	echo "[DONE] all filesystems unmounted successfully."
 }
 
 # ------------
