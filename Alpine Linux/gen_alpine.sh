@@ -128,45 +128,46 @@ EOF
 # Environment setup
 # ------------------
 setup_env(){
-	echo "[BEGIN] Preparing environment..."
+	echo "[BEGIN] Preparing environment..." && \
     printf '%s\n%s\n' "${LANGUAGE}" "${KEYBOARD_LAYOUT}" \
-		| setup-keymap > /dev/null
+		| setup-keymap > /dev/null && \
 	printf '%s.%s\n' "${HOSTNAME}" "${DOMAIN}" \
-		| setup-hostname > /dev/null
+		| setup-hostname > /dev/null && \
 	printf '%s\n%s\n%s\n%s\nn\n' \
 		"${INTERFACE}" "${IP_ADDRESS}" "${NETMASK}" "${GATEWAY}" \
-		| setup-interfaces > /dev/null
+		| setup-interfaces > /dev/null && \
     rc-service networking start > /dev/null
 	printf '%s\n%s\n' "${ROOT_PASSWD}" "${ROOT_PASSWD}" \
-		| passwd > /dev/null
+		| passwd > /dev/null && \
 	printf '%s\n%s\n' "${TIMEZONE}" "${SUB_TIMEZONE}" \
-		| setup-timezone > /dev/null
-    rc-update add networking boot > /dev/null
-    rc-update add urandom boot > /dev/null
-    rc-update add acpid default > /dev/null
-    rc-service acpid start > /dev/null
+		| setup-timezone > /dev/null && \
+    rc-update add networking boot > /dev/null && \
+    rc-update add urandom boot > /dev/null && \
+    rc-update add acpid default > /dev/null && \
+    rc-service acpid start > /dev/null && \
 	{
 		echo "127.0.0.1 ${HOSTNAME} ${HOSTNAME}.${DOMAIN} \
 			localhost localhost.localdomain";
 		echo "::1       ${HOSTNAME} ${HOSTNAME}.${DOMAIN} \
 			localhost localhost.localdomain"
-	} > /etc/hosts
+	} > /etc/hosts && \
 	printf '%s\n' "${NTP_CLIENT}" \
-		| setup-ntp > /dev/null
+		| setup-ntp > /dev/null \ &&
 	echo "Setup APK repositories (This may take a while...)"
 	printf '%s\n' "${APK_REPO_INDEX}" \
-		| setup-apkrepos > /dev/null
-	echo "done."
-    sed -i '/^.*community.*$/s/^#.*http/http/g' /etc/apk/repositories
-    apk update > /dev/null
+		| setup-apkrepos > /dev/null && \
+		echo "done." && \
+    sed -i '/^.*community.*$/s/^#.*http/http/g' /etc/apk/repositories && \
+    apk update > /dev/null && \
 	printf '%s\n' "${SSH_SERVER}" \
-		| setup-sshd > /dev/null
+		| setup-sshd > /dev/null && \
     sed -i "s/#Port 22/Port ${SSH_PORT}/g" \
-		/etc/ssh/sshd_config
+		/etc/ssh/sshd_config && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' \
-		/etc/ssh/sshd_config
-    rc-service sshd restart > /dev/null
-    apk add lvm2 cryptsetup e2fsprogs parted btrfs-progs haveged pv > /dev/null
+		/etc/ssh/sshd_config && \
+    rc-service sshd restart > /dev/null && \
+    apk add lvm2 cryptsetup e2fsprogs parted \
+	btrfs-progs haveged pv > /dev/null && \
 	echo "[DONE] Alpine environement is set."
 }
 
