@@ -153,12 +153,13 @@ setup_env(){
 	} > /etc/hosts && \
 	printf '%s\n' "${NTP_CLIENT}" \
 		| setup-ntp > /dev/null \ &&
-	echo "Setup APK repositories (This may take a while...)"
+	echo "[BEGIN] Setup APK repositories (This may take a \
+		couple of minutes)"
 	printf '%s\n' "${APK_REPO_INDEX}" \
 		| setup-apkrepos > /dev/null && \
-		echo "done." && \
-    sed -i '/^.*community.*$/s/^#.*http/http/g' /etc/apk/repositories && \
-    apk update > /dev/null && \
+	echo "[DONE] APK repositories set successfully" && \
+	sed -i '/^.*community.*$/s/^#.*http/http/g' /etc/apk/repositories && \
+	apk update > /dev/null && \
 	printf '%s\n' "${SSH_SERVER}" \
 		| setup-sshd > /dev/null && \
     sed -i "s/#Port 22/Port ${SSH_PORT}/g" \
