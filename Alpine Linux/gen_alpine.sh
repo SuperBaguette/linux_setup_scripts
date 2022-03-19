@@ -160,16 +160,23 @@ setup_env(){
 	echo "[DONE] APK repositories set successfully" && \
 	sed -i '/^.*community.*$/s/^#.*http/http/g' /etc/apk/repositories && \
 	apk update > /dev/null && \
-	printf '%s\n' "${SSH_SERVER}" \
-		| setup-sshd > /dev/null && \
-    sed -i "s/#Port 22/Port ${SSH_PORT}/g" \
-		/etc/ssh/sshd_config && \
-    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' \
-		/etc/ssh/sshd_config && \
     rc-service sshd restart > /dev/null && \
     apk add lvm2 cryptsetup e2fsprogs parted \
 	btrfs-progs haveged pv > /dev/null && \
 	echo "[DONE] Alpine environement is set."
+}
+
+setup_ssh(){
+	echo "[BEGIN] Setup SSH server..." && \
+	printf '%s\n' "${SSH_SERVER}" \
+		| setup-sshd > /dev/null && \
+    sed -i "s/#Port 22/Port ${SSH_PORT}/g" \
+		/etc/ssh/sshd_config && \
+	if [ "${SSH_PERMIT_ROOT_LOGIN}" = "true" ]
+	then
+		sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' \
+			/etc/ssh/sshd_config
+	fi
 }
 
 random_wipe_drive(){
