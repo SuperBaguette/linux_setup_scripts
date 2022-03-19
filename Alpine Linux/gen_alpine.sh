@@ -160,7 +160,6 @@ setup_env(){
 	echo "[DONE] APK repositories set successfully" && \
 	sed -i '/^.*community.*$/s/^#.*http/http/g' /etc/apk/repositories && \
 	apk update > /dev/null && \
-    rc-service sshd restart > /dev/null && \
     apk add lvm2 cryptsetup e2fsprogs parted \
 	btrfs-progs haveged pv > /dev/null && \
 	echo "[DONE] Alpine environement is set."
@@ -176,7 +175,9 @@ setup_ssh(){
 	then
 		sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/g' \
 			/etc/ssh/sshd_config
-	fi
+	fi && \
+    rc-service sshd restart > /dev/null && \
+	echo "[DONE] SSH server setup finished successfully."
 }
 
 random_wipe_drive(){
