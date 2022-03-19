@@ -208,7 +208,7 @@ setup_partitions(){
 # LVM on LUKS
 # ------------
 setup_lvm_on_luks(){
-	echo "[BEGIN] Initializing LUKS container..."
+	echo "[BEGIN] Initializing LUKS container..." && \
 	printf '%s\n' "${LUKS_PASSPHRASE}" \
 		| cryptsetup \
 	    -v \
@@ -217,16 +217,16 @@ setup_lvm_on_luks(){
 	    --hash whirlpool \
 	    --iter-time 5000 \
 	    --use-random \
-	    luksFormat "${LUKS_PARTITION}" > /dev/null
-	echo "[DONE] LUKS container generated successfully"
-	echo "[BEGIN] Create physical volume, volume group & LVMs..."
+	    luksFormat "${LUKS_PARTITION}" > /dev/null && \
+	echo "[DONE] LUKS container generated successfully" && \
+	echo "[BEGIN] Create physical volume, volume group & LVMs..." && \
 	printf '%s\n' "${LUKS_PASSPHRASE}" \
-		| cryptsetup luksOpen "${LUKS_PARTITION}" "${LUKS_DEVICE}"
-    pvcreate "/dev/mapper/${LUKS_DEVICE}" > /dev/null
-    vgcreate "${VG_NAME}" "/dev/mapper/${LUKS_DEVICE}" > /dev/null
+		| cryptsetup luksOpen "${LUKS_PARTITION}" "${LUKS_DEVICE}" && \
+    pvcreate "/dev/mapper/${LUKS_DEVICE}" > /dev/null && \
+    vgcreate "${VG_NAME}" "/dev/mapper/${LUKS_DEVICE}" > /dev/null && \
     lvcreate -L "${SWAP_PARTITION_SIZE}" "${VG_NAME}" \
-		-n "${SWAP_LV_NAME}" > /dev/null
-    lvcreate -l '100%FREE' "${VG_NAME}" -n "${ROOT_LV_NAME}" > /dev/null
+		-n "${SWAP_LV_NAME}" > /dev/null && \
+    lvcreate -l '100%FREE' "${VG_NAME}" -n "${ROOT_LV_NAME}" > /dev/null && \
 	echo "[DONE] LVMs created successfully."
 }
 
