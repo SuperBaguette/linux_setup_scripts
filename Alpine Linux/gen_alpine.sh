@@ -189,18 +189,18 @@ random_wipe_drive(){
 # Partitionning
 # --------------
 setup_partitions(){
-	echo "[BEGIN] Create partition table..."
+	echo "[BEGIN] Create partition table..." && \
     parted -s "${HDD_ALPINE}" \
-		mklabel "${PARTITION_TABLE_TYPE}"
-	echo "[DONE] Partition table created successfully."
-	echo "[BEGIN] Create boot partition..."
+		mklabel "${PARTITION_TABLE_TYPE}" && \
+	echo "[DONE] Partition table created successfully." && \
+	echo "[BEGIN] Create boot partition..." && \
     parted -a opt -s "${HDD_ALPINE}" \
-		mkpart primary ext4 0% "${BOOT_PARTITION_SIZE}" # Boot partition
-    parted -s "${HDD_ALPINE}" set 1 boot on
-	echo "[DONE] Boot partition created successfully."
-	echo "[BEGIN] Create partition for LUKS container..."
+		mkpart primary ext4 0% "${BOOT_PARTITION_SIZE}" && \
+    parted -s "${HDD_ALPINE}" set 1 boot on && \
+	echo "[DONE] Boot partition created successfully." && \
+	echo "[BEGIN] Create partition for LUKS container..." && \
     parted -a opt -s "${HDD_ALPINE}" \
-		mkpart primary "${BOOT_PARTITION_SIZE}" '100%' # LUKS container
+		mkpart primary "${BOOT_PARTITION_SIZE}" '100%' && \
 	echo "[DONE] LUKS container partition created successfully."
 }
 
